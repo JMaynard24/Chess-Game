@@ -1,14 +1,24 @@
+/**
+ * The GameDisplay class is used to display the actual chess board and game play.
+ * @author Elizabeth Dooley
+ */
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * History:
+        29-Sept-2020 - GameDisplay class created
+        26-Oct-2020 - Work began on draft 1
  */
 package chessgame;
 
-/**
- *
- * @author eddpo
- */
+import javafx.scene.layout.BorderPane;
+
 public class GameDisplay {
-    
+    /**
+     * This method will build the pane that the chess board will be in.
+     * @params None
+     * @return BorderPane Will return the pane for the actual chess board.
+     */
+    public BorderPane chessBoard(){
+        BorderPane pane = new BorderPane();
+        return(pane);
+    }
 }
