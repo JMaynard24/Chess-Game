@@ -4,25 +4,13 @@
  * chess game.
  * @author Elizabeth Dooley
  */
-/*
- * History:
-        29-Sept-2020 - MenuSystem class created, work began on draft 1
-        06-Oct-2020 - Draft 1 completed
-            - Stage, scene, and buttons added
-            - Exit button functionality added
-        12-Oct-2020 - Draft 2 started
-        19-Oct-2020 - Draft 2 completed
-            - Settings scene added
-            - Settings button functionality added
-            - GUI change options added (unfunctional)
-            - Minor design changes
-        20-Oct-2020 - Draft 3 started
- */
-package chessgame;
+package Gui;
 
 //javafx imports for gui
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -42,6 +30,7 @@ public class MenuSystem extends Application {
     //Buttons for mainMenu
     Button play = new Button("PLAY");
     Button settings = new Button("SETTINGS");
+    Button howTo = new Button("HOW TO PLAY");
     Button exit = new Button("EXIT");
     
     //Buttons, combo boxes, and check box for settingsMenu
@@ -49,6 +38,9 @@ public class MenuSystem extends Application {
     ComboBox piecesColor = new ComboBox();
     Button settingsSave = new Button("SAVE");
     Button back = new Button("BACK");
+    
+    FileManager file = new FileManager();
+    //GameDisplay display = new GameDisplay();
     
     /**
      * This method is used to create the pane for the main menu
@@ -64,7 +56,7 @@ public class MenuSystem extends Application {
         
         //creates button pane and buttons
         VBox paneForButtons = new VBox(20);
-        paneForButtons.getChildren().addAll(play, settings, exit);
+        paneForButtons.getChildren().addAll(play, settings, howTo, exit);
         paneForButtons.setAlignment(Pos.CENTER); //puts buttons in center of pane
         
         //set button pane color
@@ -92,6 +84,11 @@ public class MenuSystem extends Application {
         settings.setOnMouseEntered(e -> settings.setStyle("-fx-text-fill: grey; -fx-background-color: transparent"));
         settings.setOnMouseExited(e -> settings.setStyle("-fx-background-color: transparent"));
         
+        howTo.setStyle("-fx-background-color: transparent");
+        howTo.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
+        howTo.setOnMouseEntered(e -> howTo.setStyle("-fx-text-fill: grey; -fx-background-color: transparent"));
+        howTo.setOnMouseExited(e -> howTo.setStyle("-fx-background-color: transparent"));
+        
         //exit button style
         exit.setStyle("-fx-background-color: transparent");
         exit.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
@@ -112,7 +109,7 @@ public class MenuSystem extends Application {
     public void start(Stage primaryStage){
         //commands to open window and create first scene
         Scene sceneMenu = new Scene(mainMenu(), 500, 500);
-        GameDisplay board = new GameDisplay(); //call to create the scene for the board
+        Scene howToScene = new Scene(howToWindow(), 200, 200);
         
         primaryStage.setTitle("Chess Game");
         primaryStage.setScene(sceneMenu);
@@ -120,14 +117,29 @@ public class MenuSystem extends Application {
         primaryStage.show();
         
         //main menu buttons functionality
-        play.setOnAction(e -> primaryStage.getScene().setRoot(board.chessBoard()));
+        play.setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent event) {
+                primaryStage.close();
+                //display.getGameDisplay().setVisible(true);
+            }
+        });
         settings.setOnAction(e -> primaryStage.getScene().setRoot(settingsMenu())); //when clicked changes scene to settings menu
+        howTo.setOnAction(e -> primaryStage.setScene(howToScene));
         exit.setOnAction(e -> Platform.exit()); //exits applicztion
         
         //settings buttons functionalitys
-        settingsSave.setOnAction(e -> primaryStage.getScene().setRoot(mainMenu()));
+        settingsSave.setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent event) {
+                setPieceColor(piecesColor.getValue().toString());
+                setBoardColor(boardColor.getValue().toString());
+            }
+            
+        });
         back.setOnAction(e -> primaryStage.getScene().setRoot(mainMenu())); //when clicked returns to main menu
     }
+    
     /**
      * This method creates the BorderPane for the settings menu and sets its appearance.
      * @param None
@@ -168,15 +180,12 @@ public class MenuSystem extends Application {
         
         //options for board color
         boardColor.getItems().add("Black/White");
-        boardColor.getItems().add("Wooden");
-        boardColor.getItems().add("Black/Red");
-        boardColor.getItems().add("Green/White");
+        boardColor.getItems().add("Tan/Brown");
+        boardColor.getItems().add("Red/Black");
         
         //options for piece colors
         piecesColor.getItems().add("Black/White");
-        piecesColor.getItems().add("Wooden");
-        piecesColor.getItems().add("Black/Brown");
-        piecesColor.getItems().add("Blue/White");
+        piecesColor.getItems().add("Tan/Brown");
         
         //create a Hbox for the boardColor comboBox and it's label
         HBox boardSettings = new HBox(20);
@@ -205,11 +214,47 @@ public class MenuSystem extends Application {
     
         return(settingsPane);
     }
+    
+    private BorderPane howToWindow(){
+        BorderPane howToPane = new BorderPane();
+        Label htLabel = new Label("HOW TO:");
+        HBox textBox = new HBox(30);
+        Label textLabel = new Label("To select a piece click on it with the left mouse button\nthen click on the desired location with the left mouse"
+                + "button.\nTo unselect a piece click on it with the right mouse button.");
+        textBox.getChildren().addAll(htLabel, textLabel);
+        howToPane.setCenter(textBox);
+        return(howToPane);
+    }
+    
     /**
-     * This is the standard main menu method, used by me to test the GUI.
-     * @param args Not used
+     * This method calls the file write and writes the chosen colors to piece file.
+     * @param pieceColor Passed in string which represents chosen selection for piece colors
+     * @return None
      */
-    public static void main(String[] args) { //main method required for running
-        launch(args);                               //from netbeans
-  }
+    private void setPieceColor(String pieceColor){
+        switch(pieceColor){
+            case "Black/White": file.pieceColorWrite("black\n", "white\n");
+                    break;
+            case "Tan/Brown": file.pieceColorWrite("tan\n", "brown\n");
+                    break;
+            default: file.pieceColorWrite("black\n", "white\n");
+        }
+    }
+    
+    /**
+     * This method calls the file write and writes the chosen colors to board file.
+     * @param boardColor Passed in string which represents chosen selection for board colors
+     * @return None
+     */
+    private void setBoardColor(String boardColor){
+        switch(boardColor){
+            case "Black/White": file.boardColorWrite("black\n", "white\n");
+                    break;
+            case "Tan/Brown": file.boardColorWrite("tan\n", "brown\n");
+                    break;
+            case "Red/Black": file.boardColorWrite("red\n", "black\n");
+                    break;
+            default: file.boardColorWrite("black\n", "white\n");
+        }
+    }
 }
