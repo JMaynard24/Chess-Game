@@ -21,16 +21,20 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Font;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.TextAlignment;
+import javafx.scene.text.TextFlow;
 
 public class MenuSystem extends Application {
     //Buttons for mainMenu
     Button play = new Button("PLAY");
     Button settings = new Button("SETTINGS");
-    Button howTo = new Button("HOW TO PLAY");
+    Button howTo = new Button("HOW TO MOVE");
     Button exit = new Button("EXIT");
     
     //Buttons, combo boxes, and check box for settingsMenu
@@ -38,6 +42,8 @@ public class MenuSystem extends Application {
     ComboBox piecesColor = new ComboBox();
     Button settingsSave = new Button("SAVE");
     Button back = new Button("BACK");
+    
+    Button htBack = new Button("BACK");
     
     FileManager file = new FileManager();
     //GameDisplay display = new GameDisplay();
@@ -55,22 +61,22 @@ public class MenuSystem extends Application {
         mainText.setFont(Font.font("Verdana", FontWeight.EXTRA_BOLD, 100));
         
         //creates button pane and buttons
-        VBox paneForButtons = new VBox(20);
-        paneForButtons.getChildren().addAll(play, settings, howTo, exit);
-        paneForButtons.setAlignment(Pos.CENTER); //puts buttons in center of pane
+        VBox boxForButtons = new VBox(20);
+        boxForButtons.getChildren().addAll(play, settings, howTo, exit);
+        boxForButtons.setAlignment(Pos.CENTER); //puts buttons in center of pane
         
         //set button pane color
-        paneForButtons.setStyle("-fx-background-color: white");
+        boxForButtons.setStyle("-fx-background-color: #F8E0C8");
         
         //put button pane in center of screen
         BorderPane pane = new BorderPane();
-        pane.setCenter(paneForButtons);
+        pane.setCenter(boxForButtons);
         
         //creates a pain for the main title
         Pane textPane = new Pane();
         textPane.getChildren().add(mainText);
         pane.setTop(textPane);
-        textPane.setStyle("-fx-background-color: grey");
+        textPane.setStyle("-fx-background-color: #D2B48C");
         
         //play button style
         play.setStyle("-fx-background-color: transparent");
@@ -109,7 +115,6 @@ public class MenuSystem extends Application {
     public void start(Stage primaryStage){
         //commands to open window and create first scene
         Scene sceneMenu = new Scene(mainMenu(), 500, 500);
-        Scene howToScene = new Scene(howToWindow(), 200, 200);
         
         primaryStage.setTitle("Chess Game");
         primaryStage.setScene(sceneMenu);
@@ -125,8 +130,8 @@ public class MenuSystem extends Application {
             }
         });
         settings.setOnAction(e -> primaryStage.getScene().setRoot(settingsMenu())); //when clicked changes scene to settings menu
-        howTo.setOnAction(e -> primaryStage.setScene(howToScene));
-        exit.setOnAction(e -> Platform.exit()); //exits applicztion
+        howTo.setOnAction(e -> primaryStage.getScene().setRoot(howToWindow()));
+        exit.setOnAction(e -> Platform.exit()); //exits application
         
         //settings buttons functionalitys
         settingsSave.setOnAction(new EventHandler<ActionEvent>(){
@@ -138,6 +143,8 @@ public class MenuSystem extends Application {
             
         });
         back.setOnAction(e -> primaryStage.getScene().setRoot(mainMenu())); //when clicked returns to main menu
+        
+        htBack.setOnAction(e -> primaryStage.getScene().setRoot(mainMenu()));
     }
     
     /**
@@ -211,18 +218,54 @@ public class MenuSystem extends Application {
         settingsPane.setTop(settingsText);
         settingsPane.setCenter(settingsBox);
         settingsPane.setBottom(backBox);
+        settingsPane.setStyle("-fx-background-color: #F8E0C8");
     
         return(settingsPane);
     }
     
     private BorderPane howToWindow(){
-        BorderPane howToPane = new BorderPane();
-        Label htLabel = new Label("HOW TO:");
-        HBox textBox = new HBox(30);
-        Label textLabel = new Label("To select a piece click on it with the left mouse button\nthen click on the desired location with the left mouse"
-                + "button.\nTo unselect a piece click on it with the right mouse button.");
-        textBox.getChildren().addAll(htLabel, textLabel);
-        howToPane.setCenter(textBox);
+        BorderPane howToPane = new BorderPane(); //creates pane for window
+        
+        //back button style
+        htBack.setStyle("-fx-background-color: transparent");
+        htBack.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
+        htBack.setOnMouseEntered(e -> htBack.setStyle("-fx-text-fill: grey; -fx-background-color: transparent")); //when moused over, changes color
+        htBack.setOnMouseExited(e -> htBack.setStyle("-fx-background-color: transparent")); //when not moused over, return to original settings
+        
+        //title text settings
+        Text htText = new Text(50, 50, "How To:");
+        htText.setFill(Color.BLACK);
+        htText.setFont(Font.font("Verdana", FontWeight.EXTRA_BOLD, 50));
+        
+        //create box for text
+        Rectangle rectangle = new Rectangle(1, 1, 400, 425);
+        rectangle.setFill(Color.TAN);
+        rectangle.setStroke(Color.BLACK);
+        
+        //creates main text and centers it
+        Text text = new Text("\n\n\n\n\nTo select a piece click on it\nwith the left mouse button\nthen click on the desired location\nwith the left mouse"
+                + " button.\n\nTo unselect a selected piece\nclick on it with the\nright mouse button.\n");
+        text.setFill(Color.BLACK);
+        text.setFont(Font.font("Helvetica", FontWeight.NORMAL, 22.5));
+        TextFlow flow = new TextFlow();
+        flow.getChildren().add(text);
+        flow.setTextAlignment(TextAlignment.CENTER);
+        
+        //stack pane for rectangle and text
+        StackPane stack = new StackPane();
+        stack.getChildren().addAll(rectangle, flow);
+        
+        //create box the move button bottom right
+        HBox box = new HBox();
+        box.getChildren().add(htBack);
+        box.setAlignment(Pos.BOTTOM_RIGHT);
+        
+        //add all features to pane
+        howToPane.setTop(htText);
+        howToPane.setCenter(stack);
+        howToPane.setBottom(box);
+        howToPane.setStyle("-fx-background-color: #F8E0C8");
+        
         return(howToPane);
     }
     
@@ -233,7 +276,7 @@ public class MenuSystem extends Application {
      */
     private void setPieceColor(String pieceColor){
         switch(pieceColor){
-            case "Black/White": file.pieceColorWrite("black\n", "white\n");
+            case "Black/White": file.pieceColorWrite("white\n", "black\n");
                     break;
             case "Tan/Brown": file.pieceColorWrite("tan\n", "brown\n");
                     break;
@@ -248,7 +291,7 @@ public class MenuSystem extends Application {
      */
     private void setBoardColor(String boardColor){
         switch(boardColor){
-            case "Black/White": file.boardColorWrite("black\n", "white\n");
+            case "Black/White": file.boardColorWrite("white\n", "black\n");
                     break;
             case "Tan/Brown": file.boardColorWrite("tan\n", "brown\n");
                     break;

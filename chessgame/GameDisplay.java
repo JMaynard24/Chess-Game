@@ -6,14 +6,12 @@
 package Gui;
 
 //imports from other classes
-import Gui.FileManager;
 import board.Board;
 import board.Tile;
 import board.BoardUtils;
 import board.Move;
 import pieces.Piece;
 import player.MoveTransition;
-import player.Player;
 
 //imports from swing, awt, etc.
 import java.awt.BorderLayout;
@@ -40,6 +38,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
@@ -97,6 +96,10 @@ public class GameDisplay {
         this.gameFrame.add(this.takenPiecesPanel, BorderLayout.WEST);
         this.moveLog = new MoveLog();
         this.gameFrame.setVisible(false);
+        
+        if(chessBoard.currentPlayer().isInCheckMate() || chessBoard.currentPlayer().isInStaleMate()){
+            Win(gameFrame);
+        }
     }
     
     /**
@@ -107,6 +110,22 @@ public class GameDisplay {
     public JFrame getGameDisplay(){
         return(this.gameFrame);
     }
+    
+    /**
+     * This method is used to call the game over message and end the game,
+     * @param frame A JFrame object, the chess board.
+     * @return None
+     */
+    private void Win(JFrame frame){
+            if(chessBoard.currentPlayer().isInCheckMate()){
+                JOptionPane.showMessageDialog(frame, "Game Over: Player " + chessBoard.currentPlayer() + " is in checkmate!", "GAME OVER", JOptionPane.INFORMATION_MESSAGE);
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            }
+            if(chessBoard.currentPlayer().isInStaleMate()){
+                JOptionPane.showMessageDialog(frame, "Game Over: Player " + chessBoard.currentPlayer() + " is in stalemate.", "GAME OVER", JOptionPane.INFORMATION_MESSAGE);
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            }
+        }
     
     /**
      * This method is used to get the piece color choice & set the file path accordingly.
@@ -189,7 +208,7 @@ public class GameDisplay {
      */
     private JMenuBar createMenuBar(){
         JMenuBar menuBar = new JMenuBar();
-        JMenu exitMenu = new JMenu("Exit");
+        JMenu exitMenu = new JMenu("Resign");
         JMenuItem exit = new JMenuItem("Exit Game");
         //when clicked, exits program
         exit.addActionListener(new ActionListener(){
@@ -202,7 +221,6 @@ public class GameDisplay {
         menuBar.add(exitMenu);
         return(menuBar);
     }
-
 
     static class MoveLog {
     private final List<Move> moves;
@@ -428,7 +446,6 @@ private class TilePanel extends JPanel{
         }
     }
 }
-
 
     public class TakenPiecesPanel extends JPanel{
     private final JPanel northPanel;
