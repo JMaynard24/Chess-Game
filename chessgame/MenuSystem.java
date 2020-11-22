@@ -223,6 +223,11 @@ public class MenuSystem extends Application {
         return(settingsPane);
     }
     
+    /**
+     * This method is used to tell player how to move pieces.
+     * @param None
+     * @return BorderPane Pane to change to the How To menu
+     */
     private BorderPane howToWindow(){
         BorderPane howToPane = new BorderPane(); //creates pane for window
         
