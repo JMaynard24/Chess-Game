@@ -46,7 +46,7 @@ public class MenuSystem extends Application {
     Button htBack = new Button("BACK");
     
     FileManager file = new FileManager();
-    //GameDisplay display = new GameDisplay();
+    GameDisplay display = new GameDisplay();
     
     /**
      * This method is used to create the pane for the main menu
@@ -126,7 +126,7 @@ public class MenuSystem extends Application {
             @Override
             public void handle(ActionEvent event) {
                 primaryStage.close();
-                //display.getGameDisplay().setVisible(true);
+                display.getGameDisplay().setVisible(true);
             }
         });
         settings.setOnAction(e -> primaryStage.getScene().setRoot(settingsMenu())); //when clicked changes scene to settings menu
