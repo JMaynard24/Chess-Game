@@ -10,6 +10,7 @@ import board.Board;
 import board.Tile;
 import board.BoardUtils;
 import board.Move;
+import com.google.common.primitives.Ints;
 import pieces.Piece;
 import player.MoveTransition;
 
@@ -21,6 +22,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -49,7 +51,7 @@ public class GameDisplay {
     //private final variables
     private final JFrame gameFrame;
     private final BoardPanel boardPanel;
-    private final TakenPiecesPanel takenPiecesPanel;
+    //private final TakenPiecesPanel takenPiecesPanel;
     private final MoveLog moveLog;
     
     //private variables
@@ -70,7 +72,7 @@ public class GameDisplay {
     //Taken pieces panel variables
     private static final Color PANEL_COLOR = Color.decode("000000");
     private static final EtchedBorder PANEL_BORDER = new EtchedBorder(EtchedBorder.RAISED);
-    private static final Dimension TAKEN_PIECES_DIMENSION = new Dimension(40, 80);
+    private static final Dimension TAKEN_PIECES_DIMENSION = new Dimension(100, 100);
     
     //default file path
     private static String defaultPieceIconPath = "icons/pieces/B&W/";
@@ -92,14 +94,10 @@ public class GameDisplay {
         this.boardPanel = new BoardPanel();
         this.gameFrame.add(this.boardPanel, BorderLayout.CENTER);
         this.gameFrame.setJMenuBar(createMenuBar());
-        this.takenPiecesPanel = new TakenPiecesPanel();
-        this.gameFrame.add(this.takenPiecesPanel, BorderLayout.WEST);
+        //this.takenPiecesPanel = new TakenPiecesPanel();
+        //this.gameFrame.add(this.takenPiecesPanel, BorderLayout.WEST);
         this.moveLog = new MoveLog();
         this.gameFrame.setVisible(false);
-        
-        if(chessBoard.currentPlayer().isInCheckMate() || chessBoard.currentPlayer().isInStaleMate()){
-            Win(gameFrame);
-        }
     }
     
     /**
@@ -108,6 +106,7 @@ public class GameDisplay {
      * @return JFrame This JFrame is the window for the chess game.
      */
     public JFrame getGameDisplay(){
+        boardPanel.drawBoard(chessBoard);
         return(this.gameFrame);
     }
     
@@ -118,11 +117,7 @@ public class GameDisplay {
      */
     private void Win(JFrame frame){
             if(chessBoard.currentPlayer().isInCheckMate()){
-                JOptionPane.showMessageDialog(frame, "Game Over: Player " + chessBoard.currentPlayer() + " is in checkmate!", "GAME OVER", JOptionPane.INFORMATION_MESSAGE);
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            }
-            if(chessBoard.currentPlayer().isInStaleMate()){
-                JOptionPane.showMessageDialog(frame, "Game Over: Player " + chessBoard.currentPlayer() + " is in stalemate.", "GAME OVER", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(frame, "Checkmate!", "GAME OVER", JOptionPane.INFORMATION_MESSAGE);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             }
         }
@@ -156,7 +151,7 @@ public class GameDisplay {
      */
     private Color getLightColor(){
         //strings for file check
-        String baw = "blackwhite";
+        String baw = "whiteblack";
         String tab = "tanbrown";
         String rab = "redblack";
         
@@ -309,13 +304,12 @@ private class TilePanel extends JPanel{
         //if sqaure is left clicked, will select square; if it is right clicked it will deselect square.
         addMouseListener(new MouseListener(){
             @Override
-            public void mouseClicked(final MouseEvent e) {
-                if(SwingUtilities.isRightMouseButton(e)){
+            public void mouseClicked(final MouseEvent event) {
+                if(SwingUtilities.isRightMouseButton(event)){
                     sourceTile = null;
-                    destinationTile = null;
                     humanMovedPiece = null;
                     }
-                else if(SwingUtilities.isLeftMouseButton(e)){
+                else if(SwingUtilities.isLeftMouseButton(event)){
                     if(sourceTile == null){
                         sourceTile = chessBoard.getTile(tileID);
                         humanMovedPiece = sourceTile.getPiece();
@@ -327,47 +321,43 @@ private class TilePanel extends JPanel{
                         destinationTile = chessBoard.getTile(tileID);
                         final Move move = Move.MoveFactory.createMove(chessBoard, sourceTile.getTileCoordinate(), destinationTile.getTileCoordinate());
                         final MoveTransition transition = chessBoard.currentPlayer().makeMove(move);
-                        if(transition.getMoveStatus().isDone()){
-                            chessBoard = transition.getTransitionBoard();
-                            moveLog.addMove(move);
-                        }
+                        chessBoard = transition.getTransitionBoard();
+                        moveLog.addMove(move);
+                        
                         sourceTile = null;
                         destinationTile = null;
                         humanMovedPiece = null;
-                    }
+                    }   
+                } 
                     SwingUtilities.invokeLater(new Runnable(){
                         @Override
                         public void run() {
-                            boardPanel.drawBoard(chessBoard);
+                           boardPanel.drawBoard(chessBoard);
+                           if(chessBoard.currentPlayer().isInCheckMate()){
+                            Win(gameFrame);
+                            System.exit(0);
+                            }
                         }
                         
                     });
-                }
-            }
-            
-            //Unused mouse events
-            @Override
-            public void mousePressed(final MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
 
             @Override
-            public void mouseReleased(final MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            public void mousePressed(MouseEvent e) {
             }
 
             @Override
-            public void mouseEntered(final MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            public void mouseReleased(MouseEvent e) {
             }
 
             @Override
-            public void mouseExited(final MouseEvent e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            public void mouseEntered(MouseEvent e) {
             }
-            
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
         });
-        
         validate();
     }
     
@@ -379,6 +369,7 @@ private class TilePanel extends JPanel{
     public void drawTile(final Board board){
         assignTileColor();
         assignTilePieceIcon(board);
+        highlightLegals(chessBoard);
         validate();
         repaint();
     }
@@ -408,15 +399,13 @@ private class TilePanel extends JPanel{
      * @return None
      */
     private void highlightLegals(final Board board){
-        if(true){
-            for(final Move move : pieceLegalMoves(board)){
-                if(move.getDestinationCoordinate() == this.tileID){
-                    try{
-                        add(new JLabel(new ImageIcon(ImageIO.read(new File("icons/misc/green_dot.png")))));
-                    }
-                    catch(Exception e){
-                        e.printStackTrace();
-                    }
+        for(final Move move : pieceLegalMoves(board)){
+            if(move.getDestinationCoordinate() == this.tileID){
+                try{
+                    add(new JLabel(new ImageIcon(ImageIO.read(new File("icons/misc/green_dot.png")))));
+                }
+                catch(Exception e){
+                    e.printStackTrace();
                 }
             }
         }
@@ -458,11 +447,12 @@ private class TilePanel extends JPanel{
      */
         TakenPiecesPanel(){
         super(new BorderLayout());
-        this.setBorder(PANEL_BORDER);
+        setBackground(Color.RED);
+        setBorder(PANEL_BORDER);
         this.northPanel = new JPanel(new GridLayout(8, 2));
         this.southPanel = new JPanel(new GridLayout(8, 2));
-        this.northPanel.setBackground(PANEL_COLOR);
-        this.southPanel.setBackground(PANEL_COLOR);
+        this.northPanel.setBackground(Color.BLACK);
+        this.southPanel.setBackground(Color.BLUE);
         add(this.northPanel, BorderLayout.NORTH);
         add(this.southPanel, BorderLayout.SOUTH);
         setPreferredSize(TAKEN_PIECES_DIMENSION);
@@ -474,8 +464,8 @@ private class TilePanel extends JPanel{
      * @return Color This will return an awt Color variable, used to color the chessboard.
      */
         public void graveyardGUI(final MoveLog movelog){
-        this.southPanel.removeAll();
-        this.northPanel.removeAll();
+        southPanel.removeAll();
+        northPanel.removeAll();
         
         final List<Piece> whiteTakenPieces = new ArrayList<>();
         final List<Piece> blackTakenPieces = new ArrayList<>();
@@ -497,7 +487,7 @@ private class TilePanel extends JPanel{
         Collections.sort(whiteTakenPieces, new Comparator<Piece>(){
             @Override
             public int compare(Piece o1, Piece o2) {
-                return Integer.compare(o1.getPieceValue(), o2.getPieceValue());
+                return Ints.compare(o1.getPieceValue(), o2.getPieceValue());
             }
         });
         
@@ -505,7 +495,7 @@ private class TilePanel extends JPanel{
         Collections.sort(blackTakenPieces, new Comparator<Piece>(){
             @Override
             public int compare(Piece o1, Piece o2) {
-                return Integer.compare(o1.getPieceValue(), o2.getPieceValue());
+                return Ints.compare(o1.getPieceValue(), o2.getPieceValue());
             }
         });
         
@@ -513,9 +503,9 @@ private class TilePanel extends JPanel{
         for(final Piece takenPiece : whiteTakenPieces){
             try{
                 final BufferedImage image = ImageIO.read(new File(getPieceColor() + takenPiece.getPieceAlliance().toString().substring(0, 1)
-                + "" + takenPiece.toString()));
+                + "" + takenPiece.toString() + ".png"));
                 final ImageIcon icon = new ImageIcon(image);
-                final JLabel imageLabel = new JLabel();
+                final JLabel imageLabel = new JLabel(icon);
                 this.southPanel.add(imageLabel);
             }
             catch(Exception e){
@@ -527,10 +517,10 @@ private class TilePanel extends JPanel{
         for(final Piece takenPiece : blackTakenPieces){
             try{
                 final BufferedImage image = ImageIO.read(new File(getPieceColor() + takenPiece.getPieceAlliance().toString().substring(0, 1)
-                + "" + takenPiece.toString()));
+                + "" + takenPiece.toString() + ".png"));
                 final ImageIcon icon = new ImageIcon(image);
-                final JLabel imageLabel = new JLabel();
-                this.southPanel.add(imageLabel);
+                final JLabel imageLabel = new JLabel(icon);
+                this.northPanel.add(imageLabel);
             }
             catch(Exception e){
                 e.printStackTrace();
