@@ -10,7 +10,6 @@ import board.Board;
 import board.Tile;
 import board.BoardUtils;
 import board.Move;
-import com.google.common.primitives.Ints;
 import pieces.Piece;
 import player.MoveTransition;
 
@@ -22,7 +21,6 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -31,7 +29,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -43,7 +40,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EtchedBorder;
 
 
 
@@ -51,8 +47,6 @@ public class GameDisplay {
     //private final variables
     private final JFrame gameFrame;
     private final BoardPanel boardPanel;
-    //private final TakenPiecesPanel takenPiecesPanel;
-    private final MoveLog moveLog;
     
     //private variables
     private Board chessBoard;
@@ -68,11 +62,6 @@ public class GameDisplay {
     private final static Dimension OUTER_FRAME_DIMENSION = new Dimension(1500, 1500);
     private final static Dimension BOARD_PANEL_DIMENSION = new Dimension(400, 400);
     private final static Dimension TILE_PANEL_DIMENSION = new Dimension(10, 10);
-    
-    //Taken pieces panel variables
-    private static final Color PANEL_COLOR = Color.decode("000000");
-    private static final EtchedBorder PANEL_BORDER = new EtchedBorder(EtchedBorder.RAISED);
-    private static final Dimension TAKEN_PIECES_DIMENSION = new Dimension(100, 100);
     
     //default file path
     private static String defaultPieceIconPath = "icons/pieces/B&W/";
@@ -94,9 +83,6 @@ public class GameDisplay {
         this.boardPanel = new BoardPanel();
         this.gameFrame.add(this.boardPanel, BorderLayout.CENTER);
         this.gameFrame.setJMenuBar(createMenuBar());
-        //this.takenPiecesPanel = new TakenPiecesPanel();
-        //this.gameFrame.add(this.takenPiecesPanel, BorderLayout.WEST);
-        this.moveLog = new MoveLog();
         this.gameFrame.setVisible(false);
     }
     
@@ -115,9 +101,17 @@ public class GameDisplay {
      * @param frame A JFrame object, the chess board.
      * @return None
      */
-    private void Win(JFrame frame){
+    private void Check(JFrame frame){
             if(chessBoard.currentPlayer().isInCheckMate()){
                 JOptionPane.showMessageDialog(frame, "Checkmate!", "GAME OVER", JOptionPane.INFORMATION_MESSAGE);
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            }
+            else if(chessBoard.currentPlayer().isInStaleMate()){
+                JOptionPane.showMessageDialog(frame, "Stalemate", "GAME OVER", JOptionPane.INFORMATION_MESSAGE);
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            }
+            else if(chessBoard.currentPlayer().isInCheck()){
+                JOptionPane.showMessageDialog(frame, "Check!", "CHECK", JOptionPane.INFORMATION_MESSAGE);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             }
         }
@@ -203,8 +197,8 @@ public class GameDisplay {
      */
     private JMenuBar createMenuBar(){
         JMenuBar menuBar = new JMenuBar();
-        JMenu exitMenu = new JMenu("Resign");
-        JMenuItem exit = new JMenuItem("Exit Game");
+        JMenu optionsMenu = new JMenu("Options");
+        JMenuItem exit = new JMenuItem("Resign");
         //when clicked, exits program
         exit.addActionListener(new ActionListener(){
             @Override
@@ -212,40 +206,9 @@ public class GameDisplay {
                 System.exit(0);
             }
         });
-        exitMenu.add(exit);
-        menuBar.add(exitMenu);
+        optionsMenu.add(exit);
+        menuBar.add(optionsMenu);
         return(menuBar);
-    }
-
-    static class MoveLog {
-    private final List<Move> moves;
-     
-    /**
-     * This method is the default constructor.
-     * @param None
-     * @return None
-     */
-     MoveLog(){
-         this.moves = new ArrayList<>();
-     }
-     
-     /**
-     * This method is used to get our moves from the move log, used to move pieces to graveyard.
-     * @param None
-     * @return List Returns the move log as a list.
-     */
-     public List<Move> getMoves(){
-         return this.moves;
-     }
-     
-     /**
-     * This method is used to add a move to the move log.
-     * @param move This method takes a Move class object, move.
-     * @return None
-     */
-     public void addMove(final Move move){
-         this.moves.add(move);
-     }
     }
     
     private class BoardPanel extends JPanel{
@@ -321,22 +284,27 @@ private class TilePanel extends JPanel{
                         destinationTile = chessBoard.getTile(tileID);
                         final Move move = Move.MoveFactory.createMove(chessBoard, sourceTile.getTileCoordinate(), destinationTile.getTileCoordinate());
                         final MoveTransition transition = chessBoard.currentPlayer().makeMove(move);
-                        chessBoard = transition.getTransitionBoard();
-                        moveLog.addMove(move);
-                        
+                        if(transition.getMoveStatus().isDone()){
+                            chessBoard = transition.getTransitionBoard();
+                            boardPanel.drawBoard(chessBoard);
+                            if(chessBoard.currentPlayer().isInCheckMate() || chessBoard.currentPlayer().isInStaleMate()){
+                                Check(gameFrame);
+                                System.exit(0);
+                            }
+                            else if(chessBoard.currentPlayer().isInCheck()){
+                                Check(gameFrame);
+                            }
+                        }
                         sourceTile = null;
                         destinationTile = null;
                         humanMovedPiece = null;
+                        boardPanel.drawBoard(chessBoard);
                     }   
                 } 
                     SwingUtilities.invokeLater(new Runnable(){
                         @Override
                         public void run() {
                            boardPanel.drawBoard(chessBoard);
-                           if(chessBoard.currentPlayer().isInCheckMate()){
-                            Win(gameFrame);
-                            System.exit(0);
-                            }
                         }
                         
                     });
@@ -435,98 +403,4 @@ private class TilePanel extends JPanel{
         }
     }
 }
-
-    public class TakenPiecesPanel extends JPanel{
-    private final JPanel northPanel;
-    private final JPanel southPanel;
-    
-    /**
-     * This method is the default constructor.
-     * @param None
-     * @return None
-     */
-        TakenPiecesPanel(){
-        super(new BorderLayout());
-        setBackground(Color.RED);
-        setBorder(PANEL_BORDER);
-        this.northPanel = new JPanel(new GridLayout(8, 2));
-        this.southPanel = new JPanel(new GridLayout(8, 2));
-        this.northPanel.setBackground(Color.BLACK);
-        this.southPanel.setBackground(Color.BLUE);
-        add(this.northPanel, BorderLayout.NORTH);
-        add(this.southPanel, BorderLayout.SOUTH);
-        setPreferredSize(TAKEN_PIECES_DIMENSION);
-    }
-    
-    /**
-     * This method checks for if a piece is taken and puts it in the "graveyard" if needed.
-     * @param movelog This function takes the move log to check for taken pieces.
-     * @return Color This will return an awt Color variable, used to color the chessboard.
-     */
-        public void graveyardGUI(final MoveLog movelog){
-        southPanel.removeAll();
-        northPanel.removeAll();
-        
-        final List<Piece> whiteTakenPieces = new ArrayList<>();
-        final List<Piece> blackTakenPieces = new ArrayList<>();
-        
-        //adds taken pieces to array list
-        for(final Move move : movelog.getMoves()){
-            if(move.isAttack()){
-                final Piece takenPiece = move.getAttackedPiece();
-                if(takenPiece.getPieceAlliance().isWhite()){
-                    whiteTakenPieces.add(takenPiece);
-                }
-                else if(takenPiece.getPieceAlliance().isBlack()){
-                    blackTakenPieces.add(takenPiece);
-                }
-            }
         }
-        
-        //sorts the white pieces by their "value", grouping like pieces together
-        Collections.sort(whiteTakenPieces, new Comparator<Piece>(){
-            @Override
-            public int compare(Piece o1, Piece o2) {
-                return Ints.compare(o1.getPieceValue(), o2.getPieceValue());
-            }
-        });
-        
-        //sorts the black pieces by their "value", grouping like pieces together
-        Collections.sort(blackTakenPieces, new Comparator<Piece>(){
-            @Override
-            public int compare(Piece o1, Piece o2) {
-                return Ints.compare(o1.getPieceValue(), o2.getPieceValue());
-            }
-        });
-        
-        //puts the image of the taken white piece in the "graveyard"
-        for(final Piece takenPiece : whiteTakenPieces){
-            try{
-                final BufferedImage image = ImageIO.read(new File(getPieceColor() + takenPiece.getPieceAlliance().toString().substring(0, 1)
-                + "" + takenPiece.toString() + ".png"));
-                final ImageIcon icon = new ImageIcon(image);
-                final JLabel imageLabel = new JLabel(icon);
-                this.southPanel.add(imageLabel);
-            }
-            catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-        
-        //puts the image of the taken black piece in the "graveyard"
-        for(final Piece takenPiece : blackTakenPieces){
-            try{
-                final BufferedImage image = ImageIO.read(new File(getPieceColor() + takenPiece.getPieceAlliance().toString().substring(0, 1)
-                + "" + takenPiece.toString() + ".png"));
-                final ImageIcon icon = new ImageIcon(image);
-                final JLabel imageLabel = new JLabel(icon);
-                this.northPanel.add(imageLabel);
-            }
-            catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-        validate();
-        }
-    }
-}
